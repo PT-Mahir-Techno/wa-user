@@ -10,6 +10,7 @@ class DeviceController extends Controller
 {
     public function updateStatus(Request $request)
     {
+        // return response()->json('yaya');
         $device = Device::find($request->id);
         $device->update(['status' => request('status')]);
         

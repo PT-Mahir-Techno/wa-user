@@ -2,6 +2,7 @@
 @section('breadcrumb') <x-breadcrumb title="Device" current_page="index" url="device.index" /> @endsection
 
 @section('content')
+{{-- <button class="btn btn-danger" onclick="tes()">tes</button> --}}
   <div x-data="Device">
     @if (empty($device))
       <x-card title="Device" >
@@ -41,7 +42,6 @@
     @endif
   
     @isset($device)
-
       <x-card title="Device" >
         <div class="col-lg-8 col-md-8 col-sm-12">
           <div class="row py-4">
@@ -153,17 +153,35 @@
 
 @push('addon-script')
   <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  {{-- <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script> --}}
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.3.4/axios.min.js"></script>
   <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  {{-- <script>
+    function tes(){
+      axios.post('http://localhost:3000/sessions/add',{
+        "sessionId": "john"
+      }).then(res => console.log(res)).err(err => console.log(err))
+
+    }
+  </script> --}}
 
   <script>
     function Device(){
       device       = @json($device);
-      baseUrl      = 'https://api-wa.mahirtechnology.com';
-      originUrl    = 'http://wa_user.test/api';
+
+      // prod
+      // baseUrl      = 'https://api-wa.mahirtechnology.com';
+
+      // dev
+      baseUrl      = 'http://localhost:3000';
+
+      originUrl    = 'http://wa-user.test/api';
       session_data = {
-        'id' : device.phone_number,
-        'isLegacy' : false
+        'sessionId' : device.phone_number,
+        "readIncomingMessages": true,
+        "syncFullHistory": true
+        // 'isLegacy' : false
       };
       // baseUrl = 'https://www.google.com/';
       // axios = axios.devault
@@ -191,12 +209,12 @@
           if (device.status == 'unauthenticated'){
             setInterval(() => {
               this.addSession(session_data)
-            }, 15000);
+            }, 20000);
 
             setInterval(() => {
-              axios.get(baseUrl + '/sessions/status/' + device.phone_number)
+              axios.get(baseUrl + '/sessions/' + device.phone_number+'/status')
               .then(res =>{
-                if (res.data.data.status == 'authenticated'){
+                if (res.data.status == 'AUTHENTICATED'){
                   axios.post(originUrl + '/update-device-status', {'id': device.id, 'status' : 'authenticated'})
                   .then(res => window.location.reload())
                   .catch(err => console.log(err))
@@ -212,26 +230,27 @@
         },
 
         addSession(){
-          // console.log(session_data);
           axios.post(baseUrl +'/sessions/add', session_data)
             .then(response => {
-              document.getElementById('qr-code').src = response.data.data.qr;
-              this.qr =  response.data.data.qr;
-              console.log(response.data.data.qr)
+              document.getElementById('qr-code').src = response.data.qr;
+              // this.qr =  response.data.data.qr;
+              // console.log(response.data.data.qr)
+              console.log(response.data.qr)
             })
             .catch(error => {
-              console.log(error.response);
-              console.log(error.response.status);
-              console.log(error.response.data.message);
-              Toast.fire({
-                  icon: 'success',
-                  title: error.response.data.message
-                })
+              console.log(error)
+              // console.log(error.response);
+              // console.log(error.response.status);
+              // console.log(error.response.data.message);
+              // Toast.fire({
+              //     icon: 'success',
+              //     title: error.response.data.message
+              //   })
             });
         },
 
         deleteSession(param){
-          axios.delete(baseUrl + '/sessions/delete/' + param)
+          axios.delete(baseUrl + '/sessions/' + param)
             .then(res => {
               console.log(res.data);
               axios.post(originUrl + '/update-device-status', {'id': device.id, 'status' : 'unauthenticated'})

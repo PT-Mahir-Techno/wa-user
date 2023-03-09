@@ -11,17 +11,25 @@ class SendMessageController extends Controller
 {
     public function __construct()
     {
-        $this->base_url = 'https://api-wa.mahirtechnology.com';
+        // prod
+        // $this->base_url = 'https://api-wa.mahirtechnology.com';
+
+        // dev
+        $this->base_url = 'http://localhost:3000';
     }
 
     public function sendMessage(Request $request)
     {
-        $message = [
-            "receiver" => $request->reciver,
-            "message"  => ["text" => $request->message]
+        $msg = [
+            "jid" => $request->reciver."@s.whatsapp.net", // Target jid
+            "type"=> "number", // Use "number" for number jid, or "group" for group jid
+            "message" => [
+                "text" => $request->message
+            ], //
         ];
+
         $data = User::where('id', auth()->user()->id)->with('device')->first();
-        $response = Http::post($this->base_url.'/chats/send?id='.$data->phone_number, $message);
+        $response = Http::post($this->base_url.'/'.$data->device->phone_number.'/messages/send', $msg);
         return response()->json($response->object());
     }
     
